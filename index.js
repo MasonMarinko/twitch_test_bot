@@ -3,7 +3,7 @@ require('dotenv').config()
 
 
 // console.log(process.env.TWITCH_OAUTH_TOKEN, process.env.TWITCH_USERNAME)
-
+const reputation={};
 const client = new tmi.Client({
     options:{debug:true},
     connection: {
@@ -20,11 +20,42 @@ const client = new tmi.Client({
 client.connect()
 
 client.on('message', (channel, tags, message, self) => {
-    // Ignore echoed messages
-    if(self) return;
+    const reputationRegex = /(\+\+|--)/g;
 
-    if(message.toLowerCase() === '!hello') {
-        client.say(channel, `@${tags.username}, Yo what's up!?`);
+    if(reputationRegex.test(message)) {
+        const [user, operator] = message.split(reputationRegex);
+
+        if(!(user in reputation)) {
+            reputation[user] = 0;
+        }
+
+        if(operator === '++') {
+            reputation[user]++;
+        } else {
+            reputation[user]--;
+        }
+
+        client.say(channel, `@${tags.username}, ${user} now has a reputation of ${reputation[user]}`);
+        return;
     }
-    console.log(`${tags['display-name']}; ${message}`)
+
+    // Ignore echoed messages
+    if(self || !message.startsWith('!')) {
+        return;
+    }
+
+    const args = message.slice(1).split(' ');
+    const command = args.shift().toLowerCase();
+
+    if(command === 'echo') {
+        client.say(channel, `@${tags.username}, you said: "${args.join(' ')}"`);
+    } 
+    if(command === 'hello') {
+        client.say(channel, `@${tags.username}, Yo what's up?`);
+    } 
+    if(command === 'dice') {
+        const result = Math.floor(Math.random() * 6) + 1;
+        client.say(channel, `@${tags.username}, You rolled a ${result}.`)
+    }
+    
 });
