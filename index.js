@@ -66,3 +66,5 @@ client.on("message", (channel, tags, message, self) => {
     console.log("message:", message.includes(("what" || "which") && "server"));
   }
 });
+
+"testing something"
